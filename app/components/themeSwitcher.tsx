@@ -6,35 +6,39 @@ type Theme = "light" | "dark";
 
 export const ThemeSwitcher = () => {
   const [theme, setTheme] = useState<Theme>("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!("theme" in localStorage)) {
+    setMounted(true);
+    const savedTheme = localStorage.getItem("theme") as Theme;
+
+    if (savedTheme) {
+      setTheme(savedTheme);
+      applyTheme(savedTheme);
+    } else {
       const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       const nextTheme = isDark ? "dark" : "light";
+      setTheme(nextTheme);
       applyTheme(nextTheme);
-      return;
     }
-
-    const currentTheme = localStorage.getItem("theme") as Theme;
-    applyTheme(currentTheme);
   }, []);
 
   const applyTheme = (nextTheme: Theme) => {
-    if (localStorage.getItem("theme") === nextTheme) return;
-
-    setTheme(nextTheme);
-    localStorage.setItem("theme", nextTheme);
     if (nextTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
+    localStorage.setItem("theme", nextTheme);
   };
 
   const handleToggle = () => {
     const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
     applyTheme(nextTheme);
   };
+
+  if (!mounted) return null;
 
   return (
     <button onClick={handleToggle}>
