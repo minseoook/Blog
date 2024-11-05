@@ -1,8 +1,8 @@
-import { ImageResponse } from 'next/og'
+import { ImageResponse } from "next/og";
 
 export function GET(request: Request) {
-  let url = new URL(request.url)
-  let title = url.searchParams.get('title') || 'Next.js Portfolio Starter'
+  let url = new URL(request.url);
+  let title = url.searchParams.get("title") || "FE민석 Blog";
 
   return new ImageResponse(
     (
@@ -18,5 +18,7 @@ export function GET(request: Request) {
       width: 1200,
       height: 630,
     }
-  )
+  );
 }
+//미리보기 이미지 구현
+//meta태그의 og:image속성에 지정하면 미리보기 이미지 표시

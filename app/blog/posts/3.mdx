@@ -1,0 +1,112 @@
+---
+title: "리액트 프로젝트 에러 처리하기"
+publishedAt: "2024-09-20"
+summary: "에러 처리 전략에 대한 이야기"
+---
+
+안녕하세요, 여러분! 오늘은 제가 최근 진행한 프로젝트에서 적용한 에러 처리에 대해 이야기해보려고 합니다. 효과적인 에러 처리는 사용자 경험을 향상시키고 애플리케이션의 안정성을 높이는것에 매우 중요합니다. 이 글에서는 다양한 상황에서 에러를 어떻게 처리했는지 상세히 설명하겠습니다.
+
+## Axios 인스턴스의 인터셉터를 이용한 401에러(사용자 인증 관련)
+
+401 에러는 주로 인증 관련 문제를 나타냅니다. 이를 처리하기 위해 Axios 인스턴스의 인터셉터를 사용했습니다.
+
+```
+authAxiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const retryRequest = error.config;
+    const { response } = error;
+
+    if (response && response.status === 401) {
+      try {
+        const refreshResponse = await axiosInstance.post(
+          `${BASE_URL}/auth/token/issue`,
+        );
+
+        const newAccessToken = refreshResponse.data.acToken;
+        useAuthStore.getState().loginAction(newAccessToken);
+
+        retryRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        return authAxiosInstance(retryRequest);
+      } catch (err) {
+        // toast.error("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
+        useAuthStore.getState().logoutAction();
+        window.location.href = "/";
+
+        return Promise.reject(err);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+export default authAxi
+```
+
+인터셉터를 사용하여 모든 api호출마다 401에러를 확인후 처리를 해주었습니다
+
+## 리액트 라우터를 이용한 404에러
+
+사용자가 존재하지 않는 페이지로 이동을 하였을때 에러를 처리하는것은 중요합니다
+리액트 라우터를 사용하여 아래와 같이 구현하였습니다
+
+```
+{
+    path: "*",
+    element: <Layout footer={false} />,
+    children: [
+      {
+        path: "*",
+        element: <NotFound />,
+      },
+    ],
+  },
+```
+
+라우터 정의하는 곳의 가장아래에 위와 같이 구현을 하면 위에서 정의한 경로를 제외한 모든 경로에 대해 404페이지를 렌더시킵니다
+
+## 에러바운더리를 사용하여 렌더링시 에러 처리
+
+컴포넌트 렌더시와 라이프사이클 메서드, 자식 컴포넌트 렌더시 발생하는 에러를 잡기 위해 사용했습니다
+
+[에러바운더리 관련 글](https://velog.io/@minseoook/%EB%A6%AC%EC%95%A1%ED%8A%B8-%EC%97%90%EB%9F%AC%EB%B0%94%EC%9A%B4%EB%8D%94%EB%A6%AC)
+
+에러바운더리 예시코드와 에러바운더리에 대한 설명은 위의 글로 대체하겠습니다
+
+## 리액트 쿼리를 사용하여 api호출 에러 처리
+
+마지막으로, API 호출 시 발생하는 에러를 React Query의 isError 프로퍼티를 사용하여 처리했습니다.
+
+```
+import { useQuery } from 'react-query';
+
+function MyComponent() {
+  const { data, isLoading, isError, error } = useQuery('myData', fetchData);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {/* 데이터 렌더링 */}
+    </div>
+  );
+}
+```
+
+방식은 위와 같습니다 이 방식을 사용하여 api호출과정에서 발생하는 에러를 쉽게 처리하고 사용자에게 좋은 ui를 제공할수 있습니다
+
+> 잠깐...
+> 에러바운더리는 비동기코드는 에러를 잡지 못합니다!! 이 부분을 모르신다면 위의 에러바운더리 글을 읽어보시길 추천드립니다
+> 추가로 에러바운더리가 에러를 잡지 못하는데 방법이 없는것은 아닙니다 다만 제가 리액트 쿼리를 사용해서 에러를 처리하는 이유는 리액트쿼리가 API 요청 수행및 에러 처리를 위한 규격화된 방식을 제공하기에 리액트 쿼리에서 처리하고 있습니다
+
+## 결론
+
+에러 처리는 견고한 앱을 만들기 위해 필수적인 요소인거 같습니다
+저도 이번 프로젝트를 하면서 처음으로 에러바운더리와 리액트쿼리를 사용하게 되었고
+에러처리 하는 방법에 대해서도 생각을 해볼수 있었던거 같습니다
+앞으로도 더 나은 에러처리 전략에 대해 공부를 하면서 사용자 경험을 크게 향상시킬수 있게 노력해야 할것 같습니다!!
+
+끝....
