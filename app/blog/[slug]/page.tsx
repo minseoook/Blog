@@ -53,7 +53,7 @@ export function generateMetadata({ params }) {
     },
   };
 }
-export const revalidate = 10;
+export const revalidate = 60;
 
 export default function Blog({ params }) {
   let post = getBlogPosts().find((post) => post.slug === params.slug);
@@ -94,7 +94,9 @@ export default function Blog({ params }) {
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           {formatDate(post.metadata.publishedAt)}
         </p>
+        {/* <Suspense> */}
         <View slug={params.slug} />
+        {/* </Suspense> */}
       </div>
       <article className="prose">
         <CustomMDX source={post.content} />
