@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { CustomMDX } from "app/components/mdx";
 import { formatDate, getBlogPosts } from "app/blog/utils";
 import { baseUrl } from "app/sitemap";
+import { View } from "app/components/view";
 
 export async function generateStaticParams() {
   let posts = getBlogPosts();
@@ -52,6 +53,7 @@ export function generateMetadata({ params }) {
     },
   };
 }
+export const revalidate = 10;
 
 export default function Blog({ params }) {
   let post = getBlogPosts().find((post) => post.slug === params.slug);
@@ -92,6 +94,7 @@ export default function Blog({ params }) {
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           {formatDate(post.metadata.publishedAt)}
         </p>
+        <View slug={params.slug} />
       </div>
       <article className="prose">
         <CustomMDX source={post.content} />
