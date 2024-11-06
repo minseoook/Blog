@@ -6,10 +6,8 @@ type Theme = "light" | "dark";
 
 export const ThemeSwitcher = () => {
   const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const savedTheme = localStorage.getItem("theme") as Theme;
 
     if (savedTheme) {
@@ -37,8 +35,6 @@ export const ThemeSwitcher = () => {
     setTheme(nextTheme);
     applyTheme(nextTheme);
   };
-
-  if (!mounted) return null;
 
   return (
     <button onClick={handleToggle}>
